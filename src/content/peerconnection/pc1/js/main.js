@@ -44,6 +44,7 @@ remoteVideo.onresize = function() {
 };
 
 var localStream;
+var remoteStream;
 var pc1;
 var pc2;
 var offerOptions = {
@@ -119,6 +120,24 @@ function call() {
       offerOptions);
 }
 
+function enableDtmfSender() {
+  if (localStream !== null) {
+    var localAudioTrack = localStream.getAudioTracks()[0];
+    var dtmfSender = pc1.createDTMFSender(localAudioTrack);
+    trace('Created local DTMFSender:\n');
+  } else {
+    trace('No local stream to create DTMF Sender\n');
+  }
+
+  // if (remoteStream !== null) {
+  //   var remoteAudioTrack = remoteStream.getAudioTracks()[0];
+  //   var dtmfSender = pc2.createDTMFSender(remoteAudioTrack);
+  //   trace('Created remote DTMFSender:\n');
+  // } else {
+  //   trace('No remote stream to create DTMF Sender\n');
+  // }
+}
+
 function onCreateSessionDescriptionError(error) {
   trace('Failed to create session description: ' + error.toString());
 }
@@ -153,8 +172,17 @@ function onSetSessionDescriptionError(error) {
 }
 
 function gotRemoteStream(e) {
+  remoteStream = e.stream;
   remoteVideo.srcObject = e.stream;
   trace('pc2 received remote stream');
+  if (pc1.createDTMFSender) {
+    enableDtmfSender();
+  } else {
+    alert(
+      'This demo requires the RTCPeerConnection method createDTMFSender() ' +
+        'which is not support by this browser.'
+    );
+  }
 }
 
 function onCreateAnswerSuccess(desc) {
@@ -202,8 +230,17 @@ function hangup() {
   trace('Ending call');
   pc1.close();
   pc2.close();
+  localStream.getTracks().forEach(function(track){
+    track.stop();
+  });
+  remoteStream.getTracks().forEach(function(track){
+    track.stop();
+  });
   pc1 = null;
   pc2 = null;
+  localVideo.srcObject = null;
+  remoteVideo.srcObject = null;
   hangupButton.disabled = true;
-  callButton.disabled = false;
+  callButton.disabled = true;
+  startButton.disabled = false;
 }

@@ -12,6 +12,19 @@ var callButton = document.querySelector('button#callButton');
 var sendTonesButton = document.querySelector('button#sendTonesButton');
 var hangupButton = document.querySelector('button#hangupButton');
 
+var localVideo = document.getElementById('localVideo');
+var remoteVideo = document.getElementById('remoteVideo');
+
+localVideo.addEventListener('loadedmetadata', function() {
+  trace('Local video videoWidth: ' + this.videoWidth +
+    'px,  videoHeight: ' + this.videoHeight + 'px');
+});
+
+remoteVideo.addEventListener('loadedmetadata', function() {
+  trace('Remote video videoWidth: ' + this.videoWidth +
+    'px,  videoHeight: ' + this.videoHeight + 'px');
+});
+
 sendTonesButton.disabled = true;
 hangupButton.disabled = true;
 
@@ -29,8 +42,6 @@ var gapValue = document.querySelector('span#gapValue');
 var sentTonesDiv = document.querySelector('div#sentTones');
 var dtmfStatusDiv = document.querySelector('div#dtmfStatus');
 
-var audio = document.querySelector('audio');
-
 var pc1;
 var pc2;
 var localStream;
@@ -38,7 +49,7 @@ var dtmfSender;
 
 var offerOptions = {
   offerToReceiveAudio: 1,
-  offerToReceiveVideo: 0
+  offerToReceiveVideo: 1
 };
 
 durationInput.oninput = function() {
@@ -58,6 +69,7 @@ function main() {
 function gotStream(stream) {
   trace('Received local stream');
   localStream = stream;
+  localVideo.srcObject = stream;
   var audioTracks = localStream.getAudioTracks();
   if (audioTracks.length > 0) {
     trace('Using Audio device: ' + audioTracks[0].label);
@@ -89,7 +101,7 @@ function call() {
   trace('Requesting local stream');
   navigator.mediaDevices.getUserMedia({
     audio: true,
-    video: false
+    video: true
   })
   .then(gotStream)
   .catch(function(e) {
@@ -139,7 +151,7 @@ function hangup() {
 }
 
 function gotRemoteStream(e) {
-  audio.srcObject = e.stream;
+  remoteVideo.srcObject = e.stream;
   trace('Received remote stream');
   if (pc1.createDTMFSender) {
     enableDtmfSender();
