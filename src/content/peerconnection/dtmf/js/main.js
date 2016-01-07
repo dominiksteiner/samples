@@ -125,6 +125,9 @@ function hangup() {
   trace('Ending call');
   pc1.close();
   pc2.close();
+  localStream.getTracks().forEach(function(track){
+    track.stop();
+  });
   pc1 = null;
   pc2 = null;
   localStream = null;
